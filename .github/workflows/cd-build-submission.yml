@@ -19,18 +19,44 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: 3. Install dependencies
+      - name: 3. Install Kaggle and Dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install kaggle
           pip install -r requirements.txt
 
-      - name: 4. Run ETL Pipeline
+      - name: 4. Configure Kaggle API
+        env:
+          KAGGLE_JSON: ${{ secrets.KAGGLE_JSON }}
+        run: |
+          mkdir -p ~/.kaggle
+          echo "$KAGGLE_JSON" > ~/.kaggle/kaggle.json
+          chmod 600 ~/.kaggle/kaggle.json
+
+      - name: 5. Download and Unzip Data
+        run: |
+          # Download all competition files into the data_raw folder
+          kaggle competitions download -c walmart-recruiting-store-sales-forecasting -p data_raw
+
+          # Unzip all .zip files, placing them in data_raw
+          # The -o flag overwrites without prompting
+          unzip -o data_raw/train.csv.zip -d data_raw
+          unzip -o data_raw/test.csv.zip -d data_raw
+          unzip -o data_raw/features.csv.zip -d data_raw
+          unzip -o data_raw/sampleSubmission.csv.zip -d data_raw
+
+          # Clean up the zip files
+          rm data_raw/*.zip
+
+      - name: 6. Run ETL Pipeline
+        # Path corrected to 'pipelines/'
         run: python pipelines/pipeline.py
 
-      - name: 5. Run Model Training
-        run: python pipelines/train_model.py
+      - name: 7. Run Model Training
+        # Path corrected to 'pipelines/' and name to 'train.py'
+        run: python pipelines/train.py
 
-      - name: 6. Upload Submission Artifact
+      - name: 8. Upload Submission Artifact
         uses: actions/upload-artifact@v4
         with:
           name: walmart-sales-submission # The name of the downloadable file
