@@ -1,6 +1,5 @@
 name: CD - Build and Deliver Submission
 
-# Trigger: Run ONLY on a push to the 'main' branch
 on:
   push:
     branches:
@@ -35,29 +34,29 @@ jobs:
 
       - name: 5. Download and Unzip Data
         run: |
-          # Download all competition files into the data_raw folder
+          # 1. Download the main competition zip file
           kaggle competitions download -c walmart-recruiting-store-sales-forecasting -p data_raw
 
-          # Unzip all .zip files, placing them in data_raw
-          # The -o flag overwrites without prompting
+          # 2. Unzip the main file (which contains other zips) into data_raw
+          unzip -o data_raw/walmart-recruiting-store-sales-forecasting.zip -d data_raw
+
+          # 3. Now, unzip all the *nested* .zip files that are inside data_raw
           unzip -o data_raw/train.csv.zip -d data_raw
           unzip -o data_raw/test.csv.zip -d data_raw
           unzip -o data_raw/features.csv.zip -d data_raw
           unzip -o data_raw/sampleSubmission.csv.zip -d data_raw
 
-          # Clean up the zip files
+          # 4. Clean up all the .zip files
           rm data_raw/*.zip
 
       - name: 6. Run ETL Pipeline
-        # Path corrected to 'pipelines/'
         run: python pipelines/pipeline.py
 
       - name: 7. Run Model Training
-        # Path corrected to 'pipelines/' and name to 'train.py'
         run: python pipelines/train.py
 
       - name: 8. Upload Submission Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: walmart-sales-submission # The name of the downloadable file
-          path: submissions/submission.csv # The file to upload
+          name: walmart-sales-submission
+          path: submissions/submission.csv
