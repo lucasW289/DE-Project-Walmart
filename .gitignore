@@ -1,0 +1,10 @@
+# Data folders
+data_raw/
+data_processed/
+warehouse/
+submissions/
+
+# Python & Jupyter
+.ipynb_checkpoints/
+__pycache__/
+.DS_Store
