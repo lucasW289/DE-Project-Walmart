@@ -1,5 +1,6 @@
 name: CD - Build and Deliver Submission
 
+# Trigger: Run ONLY on a push to the 'main' branch
 on:
   push:
     branches:
@@ -55,8 +56,11 @@ jobs:
       - name: 7. Run Model Training
         run: python pipelines/train.py
 
-      - name: 8. Upload Submission Artifact
+      - name: 8. Upload Submission and Reports
         uses: actions/upload-artifact@v4
         with:
           name: walmart-sales-submission
-          path: submissions/submission.csv
+          # The pipe (|) allows us to upload multiple files/patterns
+          path: |
+            submissions/submission.csv
+            submissions/*.png
