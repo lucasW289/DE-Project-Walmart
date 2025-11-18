@@ -28,4 +28,4 @@ jobs:
       - name: 4. Run ETL Pipeline (Test)
         run: |
           # Assume your script is in a 'scripts/' folder
-          python scripts/pipeline.py
+          python pipelines/pipeline.py

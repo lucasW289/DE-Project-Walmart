@@ -25,10 +25,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: 4. Run ETL Pipeline
-        run: python scripts/pipeline.py
+        run: python pipelines/pipeline.py
 
       - name: 5. Run Model Training
-        run: python scripts/train_model.py
+        run: python pipelines/train_model.py
 
       - name: 6. Upload Submission Artifact
         uses: actions/upload-artifact@v4
