@@ -1,0 +1,37 @@
+name: CD - Build and Deliver Submission
+
+# Trigger: Run ONLY on a push to the 'main' branch
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  build-and-deliver:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Check out repository code
+        uses: actions/checkout@v4
+
+      - name: 2. Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: 3. Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 4. Run ETL Pipeline
+        run: python scripts/pipeline.py
+
+      - name: 5. Run Model Training
+        run: python scripts/train_model.py
+
+      - name: 6. Upload Submission Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: walmart-sales-submission # The name of the downloadable file
+          path: submissions/submission.csv # The file to upload

@@ -9,19 +9,23 @@ This script performs a full ETL process:
 3. Load      - Save the processed, model-ready 'train' and 'test'
                DataFrames to the /data_processed folder.
 
-This version FIXES the rolling/lag error by removing invalid index reset.
+This version is UPDATED to run correctly from the project root
+by the GitHub Actions runner.
 """
 
 import pandas as pd
 from pathlib import Path
+import sys
 
 # ====================================================
 # 1. CONFIGURATION
+#
+# Paths are defined directly from the project root,
+# which is where the GitHub Action runner executes.
 # ====================================================
 
-BASE_DIR = Path("..")
-DATA_RAW_DIR = BASE_DIR / "data_raw"
-DATA_PROCESSED_DIR = BASE_DIR / "data_processed"  # <-- fixed typo
+DATA_RAW_DIR = Path("data_raw")
+DATA_PROCESSED_DIR = Path("data_processed")
 
 CONFIG = {
     "paths": {
@@ -40,11 +44,17 @@ CONFIG = {
 
 def extract_data(paths: dict) -> tuple:
     print("STEP 1/3: Extracting raw CSV files...")
-
-    stores = pd.read_csv(paths["stores"])
-    features = pd.read_csv(paths["features"], parse_dates=["Date"])
-    train = pd.read_csv(paths["train"], parse_dates=["Date"])
-    test = pd.read_csv(paths["test"], parse_dates=["Date"])
+    
+    # Handle potential FileNotFoundError
+    try:
+        stores = pd.read_csv(paths["stores"])
+        features = pd.read_csv(paths["features"], parse_dates=["Date"])
+        train = pd.read_csv(paths["train"], parse_dates=["Date"])
+        test = pd.read_csv(paths["test"], parse_dates=["Date"])
+    except FileNotFoundError as e:
+        print(f"❌ Error: {e}.")
+        print("Note: data_raw folder must exist locally but will be ignored by git.")
+        sys.exit(1) # Fail the GitHub Action
 
     train["dataset"] = "train"
     test["dataset"] = "test"
@@ -93,7 +103,6 @@ def transform_data(df, features, stores):
     df["Weekly_Sales_Lag_1"] = grouped["Weekly_Sales"].shift(1)
     df["Weekly_Sales_Lag_52"] = grouped["Weekly_Sales"].shift(52)
 
-    # Fixed rolling feature — removed invalid reset_index()
     df["Weekly_Sales_4_Week_Avg"] = (
         grouped["Weekly_Sales"]
         .shift(1)
@@ -112,6 +121,7 @@ def transform_data(df, features, stores):
 def load_data(df, out_train, out_test):
     print("STEP 3/3: Loading processed data...")
 
+    # This path is now correct, it will create 'data_processed' at the root
     DATA_PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
     df_train = df[df["dataset"] == "train"].drop(columns=["dataset"])
@@ -145,6 +155,7 @@ def run_pipeline():
     except Exception as e:
         print("\n❌ ETL Pipeline FAILED")
         print("Error:", e)
+        sys.exit(1) # Fail the GitHub Action
 
 
 if __name__ == "__main__":
